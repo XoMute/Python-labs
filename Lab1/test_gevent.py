@@ -1,3 +1,9 @@
-import main from evloop.py
+import evloop
 
-main()
+
+def main():
+    evloop.main()
+
+
+if __name__ == "__main__":
+    main()

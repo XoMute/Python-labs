@@ -1,3 +1,9 @@
-import main from simple.py
+import simple
 
-main()
+
+def main():
+    simple.main()
+
+
+if __name__ == "__main__":
+    main()

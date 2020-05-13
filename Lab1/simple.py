@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-#15:04.16 total
+# 15:04.16 total
 from urllib.request import urlopen, urlretrieve
 from urllib import request
-import  xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup, SoupStrainer
 import eyed3
 import random
@@ -18,21 +18,26 @@ def get_urls(xml):
         urls.append(child.text)
     return urls
 
+
 def get_depth(xml):
     tree = ET.parse(xml)
     root = tree.getroot()
 
     return root.find('depth').text
 
+
 def get_html(url):
     req = request.Request(
-        url, 
-        data=None, 
+        url,
+        data=None,
         headers={
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-    }
-)
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) \
+                           AppleWebKit/537.36 (KHTML, like Gecko) \
+                           Chrome/35.0.1916.47 Safari/537.36'
+        }
+    )
     return urlopen(req).read()
+
 
 def get_all_links(html):
     soup = BeautifulSoup(html, 'html.parser')
@@ -40,6 +45,7 @@ def get_all_links(html):
     for link in soup.find_all('a'):
         links.append(link.get('href'))
     return links
+
 
 def get_all_sounds(html):
     soup = BeautifulSoup(html, 'html.parser')
@@ -53,20 +59,23 @@ def get_all_sounds(html):
             links.append(link.get('href'))
     return links
 
+
 def process_audio(url):
     if url in seen:
         return
     seen.add(url)
 
-    name = str(random.randint(1,999999))+".mp3"
+    name = str(random.randint(1, 999999))+".mp3"
 
     print("Processing audio", url)
     req = request.Request(
-        url, 
-        data=None, 
+        url,
+        data=None,
         headers={
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-    })
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) \
+                           AppleWebKit/537.36 (KHTML, like Gecko) \
+                           Chrome/35.0.1916.47 Safari/537.36'
+        })
 
     u = urlopen(req)
     f = open(name, 'wb')
@@ -75,16 +84,13 @@ def process_audio(url):
         buffer = u.read(512)
         if not buffer:
             break
-        time.sleep(0.0005)#Simulate network throttle
+        time.sleep(0.0005)  # Simulate network throttle
         f.write(buffer)
     f.close()
-
-
 
     file = eyed3.load(name)
     print(file.tag.title, file.tag.genre.name)
     add_track(file.tag.title, file.tag.genre.name)
-
 
 
 def process_url(url, depth):
@@ -95,15 +101,15 @@ def process_url(url, depth):
     html = get_html(url)
     links = get_all_links(html)
 
-    for l in links:
-        if not l:
+    for link in links:
+        if not link:
             continue
-        if "mp3" in l:
+        if "mp3" in link:
             continue
-        if 'http' not in l:
-            l = url+l
-        add_url(l,int(depth)-1)
-    
+        if 'http' not in link:
+            link = url+link
+        add_url(link, int(depth)-1)
+
     mus = get_all_sounds(html)
     for m in mus:
         if 'mp3' not in m:
@@ -116,6 +122,7 @@ def process_url(url, depth):
         except Exception:
             pass
 
+
 def add_url(url, depth):
     global urls2
     global seen
@@ -126,9 +133,9 @@ def add_url(url, depth):
     urls2.append((url, int(depth)))
 
 
-
 seen = set()
 urls2 = []
+
 
 def genxml():
     global genres
@@ -142,32 +149,31 @@ def genxml():
             sngelem.text = song
             elem.append(sngelem)
 
-    strtree = ET.tostring(root,'utf-8')
+    strtree = ET.tostring(root, 'utf-8')
     cont = ''+strtree.decode('utf-8')
-    with open ("out.xml", "w") as o:
+    with open("out.xml", "w") as o:
         o.write(cont)
+
 
 def main():
     global urls2
     urls = get_urls('data.xml')
     depth = get_depth('data.xml')
-    print("Urls: ",','.join(urls))
-    print("Depth: ",depth)
+    print("Urls: ", ','.join(urls))
+    print("Depth: ", depth)
 
     for url in urls:
         add_url(url, depth)
 
-
     while len(urls2) > 0:
         u = urls2.pop()
-        try: 
+        try:
             process_url(u[0], u[1])
         except Exception as e:
             print("Broken url ", u[0], e)
 
     print(genres)
     genxml()
-
 
 
 def add_track(name, genre):
@@ -177,17 +183,7 @@ def add_track(name, genre):
     genres[genre].append(name)
 
 
-
 genres = {}
-
-
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
